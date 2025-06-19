@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}",
+            "cwd": "${workspaceFolder}/finalproject"
+        },
+        {
+            "type": "java",
+            "name": "Wildareu 실행",
+            "request": "launch",
+            "mainClass": "finalproject.Wildareu",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/finalproject"
+        }
+    ]
+}
