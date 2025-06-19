@@ -11,10 +11,12 @@ import java.util.*;
 import java.util.List;
 
 public class Wildareu {
+    // 사용자의 선택(장소, 생존 여부, 공격성 등)을 저장하는 변수
     private String place = "";
     private boolean isAlive = true;
     private boolean isAggressive = false;
 
+    // 주요 UI 컴포넌트와 데이터 저장 변수 선언
     private JFrame frame;
     private JPanel mainPanel;
     private CardLayout cardLayout;
@@ -26,18 +28,20 @@ public class Wildareu {
     private TableRowSorter<DefaultTableModel> sorter;
     private List<DisasterData> allDisasterData;
 
+    // 생성자: 프로그램 실행 시 UI 및 화면 구성
     public Wildareu() {
         allDisasterData = new ArrayList<>();
-        initializeFrame();
-        createMainScreen();
-        createGuideScreens();
-        createInfoScreen();
-        createWildlifeInfoScreen();
+        initializeFrame(); // 프레임과 레이아웃 초기화
+        createMainScreen(); // 메인 화면 생성
+        createGuideScreens(); // 상황별 행동 가이드 화면 생성
+        createInfoScreen(); // 출현 정보(테이블) 화면 생성
+        createWildlifeInfoScreen(); // 야생동물 정보 화면 생성
         frame.add(mainPanel);
-        cardLayout.show(mainPanel, "main");
+        cardLayout.show(mainPanel, "main"); // 처음엔 메인화면 표시
         frame.setVisible(true);
     }
 
+    // JFrame 및 CardLayout 초기화
     private void initializeFrame() {
         frame = new JFrame("Wild are U? 야생동물 대응 가이드");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -48,6 +52,7 @@ public class Wildareu {
         mainPanel = new JPanel(cardLayout);
     }
 
+    // 이미지를 패널 크기에 맞게 그려주는 커스텀 패널 클래스
     static class ScaledImagePanel extends JPanel {
         private Image image;
 
@@ -74,6 +79,7 @@ public class Wildareu {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             if (image != null) {
+                // 이미지 비율 유지하며 패널에 맞게 그림
                 int panelWidth = getWidth();
                 int panelHeight = getHeight();
                 int imgWidth = image.getWidth(this);
@@ -97,6 +103,7 @@ public class Wildareu {
         }
     }
 
+    // 메인 화면 (타이틀, 메뉴 버튼 등) 생성
     private void createMainScreen() {
         JPanel mainScreen = new JPanel();
         mainScreen.setLayout(new BoxLayout(mainScreen, BoxLayout.Y_AXIS));
@@ -121,9 +128,10 @@ public class Wildareu {
         JButton wildlifeInfoButton = createStyledButton("주요 야생동물 정보");
         JButton exitButton = createStyledButton("종료");
 
+        // 각 버튼 클릭 시 화면 전환
         guideButton.addActionListener(e -> cardLayout.show(mainPanel, "alive"));
         infoButton.addActionListener(e -> {
-            loadCsvData();
+            loadCsvData(); // CSV 데이터 로드
             cardLayout.show(mainPanel, "info");
         });
         wildlifeInfoButton.addActionListener(e -> cardLayout.show(mainPanel, "wildlife"));
@@ -144,10 +152,10 @@ public class Wildareu {
         mainScreen.add(Box.createVerticalStrut(10));
         mainScreen.add(exitButton);
         mainScreen.add(Box.createVerticalStrut(20));
-
         mainPanel.add(mainScreen, "main");
     }
 
+    // 버튼 스타일 통일을 위한 메서드
     private JButton createStyledButton(String text) {
         JButton button = new JButton(text);
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -161,6 +169,7 @@ public class Wildareu {
         return button;
     }
 
+    // 출현 정보(재난문자 데이터) 화면 생성
     private void createInfoScreen() {
         JPanel infoScreen = new JPanel(new BorderLayout());
 
@@ -168,9 +177,11 @@ public class Wildareu {
         JButton backButton = new JButton("메인으로");
         backButton.addActionListener(e -> cardLayout.show(mainPanel, "main"));
 
+        // 검색창 생성 및 플레이스홀더 설정
         searchField = new JTextField("지역별로 보고 싶다면 여기에 지역 이름 입력", 20);
         searchField.setForeground(Color.GRAY);
 
+        // 검색창 포커스 이벤트(플레이스홀더 처리)
         searchField.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -189,6 +200,7 @@ public class Wildareu {
             }
         });
 
+        // 검색창 입력 변화 시 테이블 필터링
         searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) {
@@ -210,7 +222,7 @@ public class Wildareu {
         topPanel.add(new JLabel("검색: "));
         topPanel.add(searchField);
 
-        // 테이블 컬럼명 수정
+        // 테이블 컬럼명 지정 및 모델 생성
         String[] columnNames = { "NO", "메시지내용", "수신지역", "등록일자" };
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
@@ -234,6 +246,7 @@ public class Wildareu {
         mainPanel.add(infoScreen, "info");
     }
 
+    // 검색창 입력에 따라 테이블 데이터 필터링
     private void filterTable() {
         String text = searchField.getText();
         if (text.equals("지역별로 보고 싶다면 여기에 지역 이름 입력") || text.trim().length() == 0) {
@@ -243,10 +256,10 @@ public class Wildareu {
         }
     }
 
+    // '출몰' 또는 '출현' 포함 + 지역명 필터링 후 테이블에 표시
     private void displayFilteredData(String regionFilter) {
         tableModel.setRowCount(0);
         for (DisasterData data : allDisasterData) {
-            // '출몰' 또는 '출현' 키워드가 포함된 데이터만 기본 표시
             if ((data.getMessageContent().contains("출몰") || data.getMessageContent().contains("출현")) &&
                     (regionFilter.isEmpty() || data.getReceptionRegion().contains(regionFilter))) {
                 tableModel.addRow(new Object[] {
@@ -259,10 +272,10 @@ public class Wildareu {
         }
     }
 
+    // CSV 파일을 읽어와 allDisasterData 리스트에 저장
     private void loadCsvData() {
         tableModel.setRowCount(0);
         allDisasterData.clear();
-
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
@@ -287,6 +300,7 @@ public class Wildareu {
         worker.execute();
     }
 
+    // 실제로 CSV 파일을 한 줄씩 읽어서 DisasterData 객체로 변환
     private void readCsvFile() throws Exception {
         File file = new File("행정안전부_전체재난문자.csv");
         if (!file.exists()) {
@@ -297,13 +311,12 @@ public class Wildareu {
             String line;
             boolean isFirstLine = true;
             while ((line = br.readLine()) != null) {
-                // 헤더 라인 건너뛰기
+                // 첫 줄(헤더) 건너뜀
                 if (isFirstLine) {
                     isFirstLine = false;
                     continue;
                 }
-
-                // CSV 파싱 (쉼표로 구분, 따옴표 처리)
+                // CSV 한 줄 파싱
                 String[] values = parseCsvLine(line);
                 if (values.length >= 4) {
                     DisasterData data = new DisasterData(
@@ -318,7 +331,7 @@ public class Wildareu {
         }
     }
 
-    // CSV 라인 파싱 메서드 (따옴표 처리)
+    // CSV 한 줄을 쉼표, 따옴표 처리해서 분리
     private String[] parseCsvLine(String line) {
         List<String> result = new ArrayList<>();
         boolean inQuotes = false;
@@ -340,6 +353,7 @@ public class Wildareu {
         return result.toArray(new String[0]);
     }
 
+    // 주요 야생동물 정보 화면 생성
     private void createWildlifeInfoScreen() {
         JPanel wildlifePanel = new JPanel();
         wildlifePanel.setLayout(new BoxLayout(wildlifePanel, BoxLayout.Y_AXIS));
@@ -374,6 +388,7 @@ public class Wildareu {
         mainPanel.add(wildlifePanel, "wildlife");
     }
 
+    // 동물 정보 및 울음소리 안내 화면 표시
     private void showAnimalInfo(String animal) {
         String info = "";
         String imagePath = animal + ".jpg";
@@ -441,6 +456,7 @@ public class Wildareu {
         cardLayout.show(mainPanel, "result");
     }
 
+    // 상황별 행동 가이드(질문-선택-결과) 화면 생성
     private void createGuideScreens() {
         JPanel alivePanel = new JPanel();
         alivePanel.setLayout(new BoxLayout(alivePanel, BoxLayout.Y_AXIS));
@@ -453,6 +469,7 @@ public class Wildareu {
         JButton btnAliveYes = createStyledButton("예");
         JButton btnAliveNo = createStyledButton("아니오");
 
+        // 생존 여부에 따라 다음 단계 이동
         btnAliveYes.addActionListener(e -> {
             isAlive = true;
             cardLayout.show(mainPanel, "place");
@@ -565,6 +582,7 @@ public class Wildareu {
         mainPanel.add(resultPanel, "result");
     }
 
+    // 선택한 상황에 따라 행동 가이드 안내문 및 이미지 표시
     private void showResult() {
         String guide = "";
         imagePanel.setImage(null);
@@ -612,11 +630,13 @@ public class Wildareu {
         cardLayout.show(mainPanel, "result");
     }
 
+    // 프로그램 시작점
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Wildareu());
     }
 }
 
+// 재난문자 데이터 저장용 클래스
 class DisasterData {
     private String no;
     private String messageContent;
